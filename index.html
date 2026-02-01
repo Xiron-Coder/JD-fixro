@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>JD Formatteerder</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:ital,wght@1,900&family=Lato:wght@400;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --jd-green: #53cf74;
+        --black: #111827;
+      }
+      body {
+        font-family: "Lato", sans-serif;
+        background: var(--jd-green);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+      }
+      .card {
+        background: white;
+        padding: 1.5rem;
+        border: 0.3rem solid var(--black);
+        box-shadow: 0.6rem 0.6rem 0 0 var(--black);
+        width: 100%;
+        max-width: 40rem;
+      }
+      h1 {
+        font-family: "Alegreya Sans", sans-serif;
+        font-style: italic;
+        font-weight: 900;
+        text-transform: uppercase;
+        font-size: 2.2rem;
+        margin: 0 0 1rem 0;
+        line-height: 0.8;
+        border-bottom: 0.3rem solid var(--black);
+        padding-bottom: 0.5rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-cols: 1fr 1fr;
+        gap: 0.8rem;
+      }
+      .full {
+        grid-column: span 2;
+      }
+      label {
+        display: block;
+        font-family: "Alegreya Sans", sans-serif;
+        font-weight: 900;
+        font-style: italic;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        margin-bottom: 0.2rem;
+      }
+      input,
+      textarea,
+      select {
+        width: 100%;
+        padding: 0.5rem;
+        border: 0.2rem solid var(--black);
+        box-sizing: border-box;
+        font-size: 0.9rem;
+        font-weight: 700;
+        border-radius: 0;
+        font-family: "Lato", sans-serif;
+      }
+      textarea#de {
+        height: 8rem;
+        resize: vertical;
+      }
+      button {
+        width: 100%;
+        padding: 0.8rem;
+        background: var(--black);
+        color: white;
+        border: none;
+        font-family: "Alegreya Sans", sans-serif;
+        font-weight: 900;
+        font-style: italic;
+        text-transform: uppercase;
+        font-size: 1.4rem;
+        cursor: pointer;
+        margin-top: 1rem;
+        box-shadow: 0.3rem 0.3rem 0 0 var(--jd-green);
+        transition: 0.1s;
+      }
+      button:hover {
+        transform: translate(0.1rem, 0.1rem);
+        box-shadow: none;
+      }
+      #output {
+        display: none;
+        margin-top: 1rem;
+      }
+      textarea#jsonOutput {
+        height: 6rem;
+        font-size: 0.8rem;
+        background: #eee;
+        border-style: dashed;
+        font-family: monospace;
+      }
+      .btn-group {
+        display: flex;
+        gap: 0.5rem;
+      }
+      .copy-btn {
+        background: var(--jd-green);
+        color: var(--black);
+        margin-top: 0.5rem;
+        box-shadow: 0.3rem 0.3rem 0 0 var(--black);
+      }
+      .next-btn {
+        background: #fff;
+        color: var(--black);
+        border: 0.2rem solid var(--black);
+        margin-top: 0.5rem;
+        box-shadow: 0.3rem 0.3rem 0 0 var(--black);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Activiteit <span style="color: var(--jd-green)">Format</span></h1>
+      <div class="grid">
+        <div>
+          <label>Afdeling</label>
+          <select id="af">
+            <option value="Amsterdam">Amsterdam</option>
+            <option value="Arnhem-Nijmegen">Arnhem-Nijmegen</option>
+            <option value="Brabant">Brabant</option>
+            <option value="Fryslân">Fryslân</option>
+            <option value="Groningen-Drenthe">Groningen-Drenthe</option>
+            <option value="Leiden-Haaglanden">Leiden-Haaglanden</option>
+            <option value="Limburg">Limburg</option>
+            <option value="Rotterdam-Zeeland">Rotterdam-Zeeland</option>
+            <option value="Utrecht">Utrecht</option>
+          </select>
+        </div>
+        <div>
+          <label>Titel</label>
+          <input type="text" id="ti" />
+        </div>
+        <div class="full">
+          <label>Datum (DD-MM-JJJJ)</label>
+          <input type="text" id="da" placeholder="Bijv. 31-01-2026" />
+        </div>
+        <div>
+          <label>Start</label>
+          <input type="text" id="st" placeholder="19:30" />
+        </div>
+        <div>
+          <label>Eind</label>
+          <input type="text" id="ei" placeholder="23:00" />
+        </div>
+        <div class="full">
+          <label>Locatie</label>
+          <input type="text" id="lo" />
+        </div>
+        <div class="full">
+          <label>Beschrijving</label>
+          <textarea id="de"></textarea>
+        </div>
+      </div>
+      <button onclick="gen()">Code Genereren</button>
+      <div id="output">
+        <textarea id="jsonOutput" readonly></textarea>
+        <div class="btn-group">
+          <button class="copy-btn" id="btnCp" onclick="cp()">
+            Kopieer (Ctrl+C)
+          </button>
+          <button class="next-btn" onclick="next()">
+            Volgende (Ctrl+Shift)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function gen() {
+        let af = document.getElementById("af").value,
+          ti = document.getElementById("ti").value,
+          da = document.getElementById("da").value,
+          st = document.getElementById("st").value,
+          ei = document.getElementById("ei").value,
+          lo = document.getElementById("lo").value,
+          de = document.getElementById("de").value;
+        if (!ti || !da || !st) {
+          alert("Vul in elk geval titel, datum en starttijd in.");
+          return;
+        }
+        const p = {
+          afdeling: af,
+          titel: ti,
+          datum: da,
+          start: st,
+          eind: ei,
+          locatie: lo,
+          beschrijving: de,
+        };
+        document.getElementById("jsonOutput").value = JSON.stringify(
+          p,
+          null,
+          2,
+        );
+        document.getElementById("output").style.display = "block";
+      }
+
+      function cp() {
+        const e = document.getElementById("jsonOutput");
+        if (!e.value) return;
+        e.select();
+        document.execCommand("copy");
+        const btn = document.getElementById("btnCp");
+        const oldTxt = btn.innerText;
+        btn.innerText = "GEKOPIEERD!";
+        setTimeout(() => (btn.innerText = oldTxt), 1000);
+      }
+
+      function next() {
+        document.getElementById("ti").value = "";
+        document.getElementById("de").value = "";
+        document.getElementById("jsonOutput").value = "";
+        document.getElementById("output").style.display = "none";
+        document.getElementById("ti").focus();
+      }
+
+      window.addEventListener("keydown", function (e) {
+        if (e.ctrlKey && e.shiftKey) {
+          e.preventDefault();
+          next();
+        } else if (e.ctrlKey && e.key === "c") {
+          const outputVisible =
+            document.getElementById("output").style.display === "block";
+          if (outputVisible && window.getSelection().toString() === "") {
+            e.preventDefault();
+            cp();
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
