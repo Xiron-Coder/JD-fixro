@@ -3,6 +3,7 @@ require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 const readline = require("readline");
 const { execSync } = require("child_process");
+const fs = require("fs");
 
 const CFG = {
   url: "https://www.jongedemocraten.nl/wp-json/tribe/events/v1/events",
@@ -33,13 +34,13 @@ console.log(
 
 let input = "";
 rl.on("line", (l) => {
-  input += l;
+  input += l + "\n";
 });
 
 rl.on("close", () => {
   if (!input.trim()) process.exit(1);
   try {
-    const raw = JSON.parse(input);
+    const raw = JSON.parse(input.replace(/\t/g, " "));
     const dStr = raw.datum.replace(/\//g, "-");
     const parts = dStr.split("-");
     if (parts.length !== 3) throw new Error("Datum formaat fout");
@@ -47,21 +48,17 @@ rl.on("close", () => {
     const isoDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
     const dNl = `${parts[0]} / ${parts[1]} / ${parts[2]}`;
     const sh = MAP[raw.afdeling] || "JD";
-
     const bannerUrl =
       "https://www.jongedemocraten.nl/wp-content/uploads/Fotos-website-3.png";
 
     let rawHtml = `
 <div style="width:100%; font-family:sans-serif; color:#222; margin-top:-1rem;">
-    
     <div style="width:100%; height:250px; overflow:hidden; border-radius:15px; margin-bottom:2rem; background-color:#f0f0f0;">
         <img src="${bannerUrl}" style="width:100%; height:100%; object-fit:cover;" alt="Banner">
     </div>
-
     <h1 style="font-size:2.5rem; font-weight:900; margin:0 0 2rem 0; line-height:1.2; color:#1a202c;">
         JD-${sh}: ${raw.titel}
     </h1>
-
     <div style="display:flex; flex-wrap:wrap; gap:3rem;">
         <div style="flex:1; min-width:250px;">
             <h2 style="font-size:1.5rem; font-weight:bold; margin-top:0; margin-bottom:1rem; color:#1a202c;">In het kort</h2>
@@ -71,7 +68,6 @@ rl.on("close", () => {
                 <p style="margin-bottom:0.5rem;"><strong style="color:#53cf74; text-transform:uppercase; font-size:0.9rem;">Locatie</strong><br>${raw.locatie || "Volgt"}</p>
             </div>
         </div>
-
         <div style="flex:2; min-width:300px;">
             <h2 style="font-size:1.5rem; font-weight:bold; margin-top:0; margin-bottom:1rem; color:#1a202c;">Beschrijving</h2>
             <p style="font-weight:bold; margin-bottom:1rem;">${raw.afdeling} organiseert: ${raw.titel}</p>
@@ -79,14 +75,12 @@ rl.on("close", () => {
         </div>
     </div>
 </div>
-
 <style>
   .tribe-events-single-event-title, h1.tribe-events-single-event-title { display: none !important; }
   .tribe-events-schedule, .tribe-events-notices, .tribe-events-event-meta, .tribe-events-single-section, .tribe-events-cal-links, .tribe-events-back, .tribe-events-nav-pagination, .tribe-events-event-image { display: none !important; }
   #tribe-events-content { padding-top: 0 !important; margin-top: 0 !important; }
 </style>`;
 
-    // Opschonen
     const html = rawHtml
       .replace(/<!--[\s\S]*?-->/g, "")
       .replace(/\n/g, " ")
@@ -105,7 +99,6 @@ rl.on("close", () => {
     console.log(`\nVersturen: ${payload.title}...`);
 
     const auth = Buffer.from(`${CFG.user}:${CFG.pass}`).toString("base64");
-    const fs = require("fs");
     const tmpFile = path.join(__dirname, "tmp.json");
     fs.writeFileSync(tmpFile, JSON.stringify(payload));
 
